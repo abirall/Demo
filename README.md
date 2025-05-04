@@ -1,220 +1,114 @@
-employee-directory/
-├── backend/
-│   ├── server.js
-│   ├── .env
-│   ├── models/
-│   │   └── Employee.js
-│   └── routes/
-│       └── employeeRoutes.js
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── App.js
-│   │   └── index.js
-│   ├── package.json
-│   └── .gitignore
-├── jenkins/
-│   └── Jenkinsfile
-├── .gitignore
-└── README.md
 
-// backend/server.js
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
-
-const employeeRoutes = require('./routes/employeeRoutes');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use('/api/employees', employeeRoutes);
-
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('MongoDB connected');
-        app.listen(5000, () => console.log('Server running on port 5000'));
-    })
-    .catch((err) => console.error(err));
-
-// backend/.env
-MONGO_URI=mongodb://localhost:27017/employeeDB
-
-// backend/models/Employee.js
-const mongoose = require('mongoose');
-
-const employeeSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    position: String,
-});
-
-module.exports = mongoose.model('Employee', employeeSchema);
-
-// backend/routes/employeeRoutes.js
-const express = require('express');
-const router = express.Router();
-const Employee = require('../models/Employee');
-
-router.post('/', async (req, res) => {
-    try {
-        const employee = new Employee(req.body);
-        await employee.save();
-        res.status(201).json(employee);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Directory</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 20px;
     }
-});
 
-router.get('/', async (req, res) => {
-    try {
-        const employees = await Employee.find();
-        res.json(employees);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+    h1 {
+      text-align: center;
+      color: #333;
     }
-});
 
-module.exports = router;
-
-// frontend/src/App.js
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-function App() {
-  const [employees, setEmployees] = useState([]);
-  const [form, setForm] = useState({ name: '', email: '', position: '' });
-
-  const fetchEmployees = async () => {
-    const res = await axios.get('http://localhost:5000/api/employees');
-    setEmployees(res.data);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await axios.post('http://localhost:5000/api/employees', form);
-    setForm({ name: '', email: '', position: '' });
-    fetchEmployees();
-  };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  return (
-    <div>
-      <h1>Employee Directory</h1>
-      <form onSubmit={handleSubmit}>
-        <input placeholder="Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-        <input placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-        <input placeholder="Position" value={form.position} onChange={e => setForm({...form, position: e.target.value})} />
-        <button type="submit">Add</button>
-      </form>
-      <ul>
-        {employees.map(emp => (
-          <li key={emp._id}>{emp.name} - {emp.email} - {emp.position}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-
-// frontend/src/index.js
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
-
-// frontend/.gitignore
-node_modules
-build
-
-// frontend/package.json (minimal setup)
-{
-  "name": "frontend",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "axios": "^1.6.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
-  }
-}
-
-// jenkins/Jenkinsfile
-pipeline {
-    agent any
-    environment {
-        NODE_ENV = 'production'
+    .form-container, .list-container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
     }
-    stages {
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/YOUR_USERNAME/employee-directory.git'
-            }
-        }
 
-        stage('Build Backend') {
-            steps {
-                dir('backend') {
-                    sh 'npm install'
-                }
-            }
-        }
-
-        stage('Build Frontend') {
-            steps {
-                dir('frontend') {
-                    sh 'npm install'
-                    sh 'npm run build'
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploying to EC2...'
-                // Add SSH or SCP deploy logic here
-            }
-        }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-}
 
-// .gitignore
-node_modules
-.env
-frontend/build
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-// README.md
-# Employee Directory Web App
+    button:hover {
+      background-color: #0056b3;
+    }
 
-A full-stack web application where employees can be added and viewed. Built with React, Express, MongoDB, and Jenkins for CI/CD.
+    ul {
+      list-style: none;
+      padding: 0;
+    }
 
-## How to Run
+    li {
+      background: #f1f1f1;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
 
-### Backend
-```bash
-cd backend
-npm install
-node server.js
-```
+    .emp-title {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Employee Directory</h1>
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm start
-```
+  <div class="form-container">
+    <input type="text" id="name" placeholder="Name" />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="text" id="position" placeholder="Position" />
+    <button onclick="addEmployee()">Add Employee</button>
+  </div>
 
-Make sure MongoDB is running locally or replace `MONGO_URI` with your cloud MongoDB URI.
+  <div class="list-container">
+    <h2>Employee List</h2>
+    <ul id="employeeList"></ul>
+  </div>
+
+  <script>
+    const employees = [];
+
+    function addEmployee() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const position = document.getElementById('position').value.trim();
+
+      if (name && email && position) {
+        employees.push({ name, email, position });
+        displayEmployees();
+        document.getElementById('name').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('position').value = '';
+      } else {
+        alert('Please fill in all fields');
+      }
+    }
+
+    function displayEmployees() {
+      const list = document.getElementById('employeeList');
+      list.innerHTML = '';
+      employees.forEach((emp, index) => {
+        const item = document.createElement('li');
+        item.innerHTML = `<span class="emp-title">${emp.name}</span> – ${emp.email} – ${emp.position}`;
+        list.appendChild(item);
+      });
+    }
+  </script>
+</body>
+</html>
 
